@@ -7,8 +7,9 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/brython/3.12.0/brython_stdlib.js"></script>
     <style>
         body { background-color: #050505; color: #FFFB00; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; height: 100vh; margin: 0; padding: 10px; overflow: hidden; }
-        #input-area { width: 95%; max-width: 750px; margin-bottom: 10px; }
-        #user-input { width: 100%; background: #111; color: #FFFB00; border: 2px solid #FFFB00; padding: 15px; font-size: 18px; outline: none; box-sizing: border-box; }
+        #input-area { width: 95%; max-width: 750px; margin-bottom: 10px; display: flex; gap: 5px; }
+        #user-input { flex-grow: 1; background: #111; color: #FFFB00; border: 2px solid #FFFB00; padding: 15px; font-size: 18px; outline: none; }
+        #send-btn { background: #FFFB00; color: #000; border: none; padding: 15px; font-weight: bold; cursor: pointer; border-radius: 5px; }
         #game-output { background-color: #000; color: #FFFB00; padding: 15px; width: 95%; max-width: 750px; white-space: pre-wrap; font-size: 14px; border: 2px solid #FFFB00; flex-grow: 1; overflow-y: auto; box-shadow: inset 0 0 15px #333; }
         .hacked-ui { color: #00FF00 !important; text-shadow: 0 0 8px #00FF00; border-color: #00FF00 !important; }
         .btn { background: #FFFB00; color: #000; border: none; padding: 10px; cursor: pointer; font-weight: bold; margin: 5px; font-family: 'Courier New'; border-radius: 5px; }
@@ -16,7 +17,8 @@
 </head>
 <body onload="brython()">
     <div id="input-area">
-        <input type="text" id="user-input" placeholder="TYPE COMMAND..." autocomplete="off" autofocus>
+        <input type="text" id="user-input" placeholder="COMMAND..." autocomplete="off">
+        <button id="send-btn">SEND</button>
     </div>
     <div id="game-output">SYSTEM INITIALIZING...</div>
 
@@ -24,7 +26,7 @@
 from browser import document, window, timer, html
 import random
 
-# --- GAME DATA & SCRIPTS ---
+# --- DATA & LORE ---
 cam_names = ["Stage", "Play Area", "Arcade", "L Hall", "R Hall", "L Door", "R Door", "Parts"]
 death_quotes = {
     "Starr Baby": "That's what you get for stealing my spotlight...",
@@ -198,10 +200,9 @@ def start_story():
         4: "Melissa (GLITCHY): J-Jackson... something's wrong in the P-Parts room. There's a glitch. If you see him stand up fully on the camera, RESET the system. But whatever you do, don't touch that reset while he's still sitting!",
         5: "Melissa: This is it. The bots are... they're not acting right. Just survive until 6AM and you're free. Good luck, Jackson."
     }
-    document["game-output"].text = stories.get(night, "") + "\n\n(Press Enter to Start)"
+    document["game-output"].text = stories.get(night, "") + "\n\n(Type 1 and SEND to Start)"
 
-def handle_input(ev):
-    if ev.keyCode != 13: return
+def handle_input(ev=None):
     val = document["user-input"].value.strip().upper()
     document["user-input"].value = ""
     if state == "MENU" and val == "1": start_story()
@@ -211,8 +212,13 @@ def handle_input(ev):
         log("FEED ESTABLISHED.")
     elif state == "PLAYING": process_turn(val)
 
-document["user-input"].bind("keydown", handle_input)
+def key_press(ev):
+    if ev.keyCode == 13: handle_input()
+
+document["send-btn"].bind("click", handle_input)
+document["user-input"].bind("keydown", key_press)
 boot_title()
 </script>
 </body>
 </html>
+ 

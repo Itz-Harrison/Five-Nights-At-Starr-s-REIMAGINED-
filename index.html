@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>5 Night's at Starr's (REIMAGINED)</title>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/brython/3.12.0/brython.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/brython/3.12.0/brython_stdlib.js"></script>
+    <style>
+        body { background-color: #050505; color: #FFFB00; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; height: 100vh; margin: 0; padding: 10px; overflow: hidden; }
+        #game-output { background-color: #000; color: #FFFB00; padding: 15px; width: 95%; max-width: 750px; white-space: pre-wrap; font-size: 14px; border: 2px solid #FFFB00; flex-grow: 1; overflow-y: auto; box-shadow: inset 0 0 15px #333; }
+        #input-area { display: flex; width: 95%; max-width: 750px; margin-top: 10px; }
+        #user-input { flex-grow: 1; background: #111; color: #FFFB00; border: 2px solid #FFFB00; padding: 12px; font-size: 18px; outline: none; }
+        .hacked-ui { color: #00FF00 !important; text-shadow: 0 0 8px #00FF00; border-color: #00FF00 !important; }
+        .btn { background: #FFFB00; color: #000; border: none; padding: 10px; cursor: pointer; font-weight: bold; margin: 5px; font-family: 'Courier New'; border-radius: 5px; }
+    </style>
+</head>
+<body onload="brython()">
+    <h1 id="main-title">5 NIGHT'S AT STARR'S: REIMAGINED</h1>
+    <div id="game-output">SYSTEM READY...</div>
+    <div id="input-area">
+        <input type="text" id="user-input" placeholder="TYPE COMMAND..." autocomplete="off" autofocus>
+    </div>
+
+<script type="text/python">
+from browser import document, window, timer, html
+import random
+
+# --- GAME DATA & LORE ---
+cam_names = ["Stage", "Play Area", "Arcade", "L Hall", "R Hall", "L Door", "R Door", "Parts"]
+death_quotes = {
+    "Starr Baby": "That's what you get for stealing my spotlight...",
+    "Diamond Diva": "You were no match for my elegance...",
+    "Princess Pinky": "Thought you could hide from me..?",
+    "Penelope Purple": "Purple is the colour of revenge and despair...",
+    "Glitch Starr": "Oh wow! I didn't even try to hack those systems and you still reset them..!"
+}
+
+state = "MENU"
+night = 1
+hacked = False
+mask_on = False
+cam_count = 0
+n_data = {}
+corrupt_parts = []
+
+def log(text):
+    out = document["game-output"]
+    if hacked: out.classList.add("hacked-ui")
+    else: out.classList.remove("hacked-ui")
+    
+    status = f"[{n_data['hr']} AM] [POWER: {int(n_data['pwr'])}%] [NIGHT {night}]\n"
+    if hacked: status += "!! SYSTEM HACKED - DEFENSES OFFLINE !!\n"
+    status += "="*45 + "\n"
+    
+    out.html = status + f"> {text}\n\n"
+    out <= "CAMS: 1-8 (Max 2) | L: L-Door | R: R-Door | M: Mask | RESET: Reboot | 0: Wait"
+
+def jumpscare(who):
+    global state
+    state = "GAMEOVER"
+    out = document["game-output"]
+    out.classList.remove("hacked-ui")
+    out.html = f"<div style='color:red; text-align:center; padding-top:40px;'><h1>DEATH BY {who.upper()}</h1>"
+    out.html += f"<p style='font-size:18px; font-style:italic;'>\"{death_quotes.get(who, '...')}\"</p></div>"
+    timer.set_timeout(show_menu, 5000)
+
+def process_turn(cmd):
+    global cam_count, mask_on, hacked, state
+    n = n_data
+    n["turn"] += 1
+    
+    # Time Flow
+    if n["turn"] >= 10: 
+        n["turn"] = 0
+        n["hr"] = 1 if n["hr"] == 12 else n["hr"] + 1
+        if n["hr"] == 6: win_night(); return
+
+    # Power Logic
+    drain = 1.2
+    if n["l_door"]: drain += 2.0
+    if n["r_door"]: drain += 2.0
+    if mask_on: drain += 1.5
+    n["pwr"] -= drain
+    if n["pwr"] <= 0: jumpscare("Power Outage"); return
+
+    msg = "Action taken."
+    # Controls
+    if not hacked:
+        if cmd.isdigit() and 1 <= int(cmd) <= 8:
+            if cam_count < 2:
+                idx = int(cmd)-1
+                cam_count += 1
+                found = []
+                if n["starr"]["pos"] == idx: found.append("STARR BABY")
+                if n["diva"]["pos"] == idx: found.append("DIAMOND DIVA")
+                if night >= 4 and idx == 7:
+                    g_stages = ["(Sitting)", "(Standing...)", "(Almost up)", "(STOOD UP)"]
+                    found.append(f"GLITCH STARR {g_stages[n['glitch']['stage']]}")
+                msg = f"CAM {cmd} ({cam_names[idx]}): " + (", ".join(found) if found else "Quiet.")
+            else: msg = "Camera Buffer Full! (Limit 2 per turn)"
+        elif cmd == "L": n["l_door"] = not n["l_door"]; msg = f"Left Door: {'CLOSED' if n['l_door'] else 'OPEN'}"
+        elif cmd == "R": n["r_door"] = not n["r_door"]; msg = f"Right Door: {'CLOSED' if n['r_door'] else 'OPEN'}"
+        elif cmd == "M": mask_on = not mask_on; msg = f"Starr Mask: {'ON' if mask_on else 'OFF'}"
+        elif cmd == "RESET" or cmd == "S":
+            if night >= 4 and n["glitch"]["stage"] != -1:
+                if n["glitch"]["stage"] == 3: # HE IS STOOD UP
+                    n["glitch"]["stage"] = -1; n["glitch"]["wait"] = 5; n["glitch"]["ht"] = 0; msg = "SYSTEM REBOOT SUCCESSFUL."
+                else: jumpscare("Glitch Starr"); return
+            else: msg = "System already stable. Resetting now would cause a crash."
+        elif cmd == "0": msg = "You waited..."
+    else: msg = "CONTROLS FROZEN. REBOOT FAILED."
+
+    cam_count = 0
+    # AI - STARR & DIVA
+    for bot, path, door_key, j_name in [("starr", [0,1,2,4,6], "r_door", "Starr Baby"), ("diva", [0,1,3,5], "l_door", "Diamond Diva")]:
+        b = n[bot]
+        if b["pos"] != path[-1]:
+            b["wait"] -= 1
+            if b["wait"] <= 0:
+                if bot == "starr" and night == 5 and b["pos"] == 1: b["pos"] = 6 # The Vent Shortcut
+                else: b["pos"] = path[path.index(b["pos"])+1]
+                b["wait"] = random.randint(2, 4)
+        else:
+            if n[door_key]: b["pos"] = 0; b["wait"] = 3; b["dt"] = 0
+            else:
+                b["dt"] += 1
+                if b["dt"] >= 2: jumpscare(j_name); return
+
+    # AI - VENTS
+    for girl, n_req in [("pinky", 2), ("penelope", 3)]:
+        if night >= n_req:
+            v = n[girl]
+            v["wait"] -= 1
+            if v["wait"] <= 0: v["stage"] += 1; v["wait"] = 2
+            if v["stage"] > 2:
+                if not mask_on: jumpscare("Princess Pinky" if girl=="pinky" else "Penelope Purple"); return
+                else: v["stage"] = -1; v["wait"] = random.randint(4, 7)
+
+    # AI - GLITCH
+    if night >= 4:
+        g = n["glitch"]
+        if g["stage"] < 3:
+            g["wait"] -= 1
+            if g["wait"] <= 0: g["stage"] += 1; g["wait"] = 2
+        else:
+            g["ht"] += 1
+            if g["ht"] >= 2: hacked = True; mask_on = False; n["l_door"] = False; n["r_door"] = False
+
+    log(msg)
+
+def win_night():
+    global state; state = "WIN"
+    document["game-output"].html = "<h1 style='color:lime; text-align:center; padding-top:60px;'>6:00 AM</h1>"
+    timer.set_timeout(start_bonus_task, 3000)
+
+def start_bonus_task():
+    global state, corrupt_parts
+    if night == 5:
+        state = "ENDING"
+        txt = "Danny Stephen: Jackson, incredible work. You've honored my father's designs.\n\n"
+        txt += "Danny: Here is your paycheck. I've added a bonus for your... bravery.\n\n"
+        txt += "Jackson: I'm taking the money and I'm out of here. Forever.\n\n"
+        txt += "Danny: I understand. Good luck, Jackson. You're a free man."
+        document["game-output"].text = txt
+        timer.set_timeout(lambda: window.location.reload(), 9000)
+        return
+    
+    state = "BONUS"
+    parts = ["Head", "Torso", "L-Arm", "R-Arm", "L-Leg", "R-Leg"]
+    corrupt_parts = random.sample(parts, random.randint(1 + (night//2), 4))
+    render_bonus()
+
+def render_bonus():
+    out = document["game-output"]
+    target = ["Starr Baby","Diamond Diva","Princess Pinky","Penelope Purple"][night-1]
+    out.html = f"MAINTENANCE: {target}\nClick each part to scan. DO NOT press DONE if corruption remains.\n\n"
+    for p in ["Head", "Torso", "L-Arm", "R-Arm", "L-Leg", "R-Leg"]:
+        btn = html.BUTTON(f"SCAN {p}", ClassName="btn")
+        btn.bind("click", lambda e, part=p: check_part(part))
+        out <= btn
+    done = html.BUTTON("DONE", ClassName="btn", style={"display":"block", "marginTop":"25px", "background":"#0f0"})
+    done.bind("click", lambda e: finish_bonus())
+    out <= done
+
+def check_part(p):
+    global corrupt_parts
+    if p in corrupt_parts:
+        window.alert(f"{p}: !! CORRUPTION DETECTED !! Resetting system...")
+        corrupt_parts.remove(p)
+        if random.random() > 0.6: corrupt_parts.append(random.choice(["Head", "Torso", "L-Arm", "R-Arm"]))
+    else: window.alert(f"{p}: 0% Corruption. Clean.")
+
+def finish_bonus():
+    global night
+    if not corrupt_parts:
+        night += 1; show_menu()
+    else: jumpscare(["Starr Baby","Diamond Diva","Princess Pinky","Penelope Purple"][night-1])
+
+def show_menu():
+    global state; state = "MENU"
+    document["game-output"].text = f"5 NIGHT'S AT STARR'S: REIMAGINED\n\nCURRENT NIGHT: {night}\n\n1: START NIGHT"
+
+def start_story():
+    global state, n_data, hacked, mask_on, cam_count
+    state = "STORY"
+    hacked = False; mask_on = False; cam_count = 0
+    
+    stories = {
+        1: "Danny Stephen: Welcome to the party place, Jackson! My father would be proud.\nMelissa: Hey Jackson! I'm Melissa. Watch the doors for Starr Baby and Diva. If they are outside, close 'em quick!",
+        2: "Melissa: Good job. Princess Pinky is on the move in the Left Vent. If you hear her clambering right in your ear... put on the Starr Mask immediately!",
+        3: "Melissa: Penelope Purple is active in the Right Vent today. She's sneaky, so keep listening for that clambering. Use the mask to fool her!",
+        4: "Melissa (GLITCHY): Jackson... th-there is something in the P-Parts room. If it stands up fully, RESET the system. But don't touch it while it's sitting or you'll trigger a fatal crash!",
+        5: "Melissa: Everything is aggressive today. We had to shut down the building. Just survive until 6AM and you're done. Be careful!"
+    }
+    document["game-output"].text = stories.get(night, "Stay alert.") + "\n\n(Press Enter to Begin Shift)"
+
+def handle_input(ev):
+    if ev.keyCode != 13: return
+    val = document["user-input"].value.strip().upper()
+    document["user-input"].value = ""
+    
+    if state == "MENU" and val == "1": start_story()
+    elif state == "STORY":
+        global state; state = "PLAYING"
+        n_data.update({"hr": 12, "turn": 0, "pwr": 100, "starr": {"pos": 0, "wait": 3, "dt": 0}, "diva": {"pos": 0, "wait": 3, "dt": 0}, "pinky": {"stage": -1, "wait": 4}, "penelope": {"stage": -1, "wait": 4}, "glitch": {"stage": -1, "wait": 5, "ht": 0}, "l_door": False, "r_door": False})
+        log("Security Feed Online.")
+    elif state == "PLAYING": process_turn(val)
+
+document["user-input"].bind("keydown", handle_input)
+show_menu()
+</script>
+</body>
+</html>

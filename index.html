@@ -176,7 +176,7 @@ def start_maint():
     global state, corrupt_parts
     if night == 5:
         state = "ENDING"
-        txt = "Danny Stephen: Jackson, you did it. The opening was a success.\n\nDanny: Here is your payment. It's... a lot more than we agreed. You saved this place.\n\nJackson: Keep the money, Danny. I'm done. I can't do another night in this place. I quit.\n\nDanny: I understand. Go home, Jackson."
+        txt = "Danny Stephen: Jackson, you did it. The opening was a success.\n\nDanny: Here is your payment. It's... a lot more than we agreed. You saved this place.\n\nJackson: Danny, I'm done. I can't do another night in this place. I quit.\n\nDanny: I understand. Take thr money and go home, Jackson. Good luck out there..."
         document["game-output"].text = txt
         timer.set_timeout(lambda: window.location.reload(), 10000); return
     
@@ -215,11 +215,11 @@ def start_story():
     global state, n_data, hacked, mask_on, cam_count
     state = "STORY"; hacked = False; mask_on = False; cam_count = 0
     stories = {
-        1: "Danny Stephen: Jackson! Glad you're here. This is my father's legacy—Starr's. Keep it safe.\nMelissa: Use L and R for the doors. Watch Cam 6 and 7!",
-        2: "Melissa: Pinky is active. She likes the Left Vent. If you hear her, use Cam M (Mask)!",
+        1: "Danny Stephen: Jackson! Glad you're here. Welcome to Starr Baby's Party Place! We're opening in 5 days. Keep it safe.\nMelissa: Hi Jackson! I'm Melissa, your co-worker. Use L and R for the doors. Watch out for Starr Baby and Diamond Diva. Starr comes from the Right and Diamond from the left. Keep an eye on the cameras Jackson!",
+        2: "Melissa: Time for another night. This time Pinky is active. She likes the Left Vent. If you hear her about to leave the vent, use the Starr Mask!",
         3: "Melissa: Penelope is loose. She uses the Right Vent. Same mask rules apply!",
-        4: "Melissa: There's a glitch in Cam 8. Don't RESET until he's standing up, or you'll crash the system!",
-        5: "Melissa: This is the end. They're all coming for you. Just get to 6AM."
+        4: "Melissa: Hey Jackson.. Just wanted to let you know systems have been really glitchy lately... Workers have reported a glitchy version of Starr in parts and services... If it appears keep an eye on it... If it stands up reset the systems but never do it before that... Be careful Jackson...",
+        5: "Melissa: This is the end. They're all coming for you. Just get to 6AM alive. Good luck..."
     }
     document["game-output"].text = stories.get(night, "") + "\n\n(Type 1 and SEND to Start Night)"
 

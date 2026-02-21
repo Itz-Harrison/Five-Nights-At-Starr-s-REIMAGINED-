@@ -163,7 +163,7 @@ def start_maintenance():
     global state, corrupt_parts
     if night == 5:
         state = "ENDING"
-        document["game-output"].text = "Mr. Stephen: Incredible work, Jackson. You saved my father's legacy.\n\nDanny: Here is your paycheck. It's much larger than we agreed. You earned it.\n\nJackson: Thanks, Danny. But I'm quitting. I'm done with this place.\n\nDanny: I understand. Good luck out there."
+        document["game-output"].text = "Danny Stephen: Incredible work, Jackson. You saved my father's legacy.\n\nDanny: Here is your paycheck. It's much larger than we agreed. You earned it.\n\nJackson: Thanks, Danny. But I'm quitting. I'm done with this place.\n\nDanny: I understand. Good luck out there."
         timer.set_timeout(lambda: window.location.reload(), 10000); return
     
     state = "BONUS"; parts = ["Head", "Torso", "L-Arm", "R-Arm", "L-Leg", "R-Leg"]
@@ -200,11 +200,11 @@ def start_story():
     global state, n_data, hacked, mask_on, cam_count
     state = "STORY"; hacked = False; mask_on = False; cam_count = 0
     stories = {
-        1: "Mr. Stephen: Welcome to the Grand Opening! You will br working the night shift. All you have to do is keep the animatronics in good condition.\nMelissa: Hey Jackson! I'm Melissa I'm your co-worker. To survive watch the Doors! Starr Baby (Right) and Diamond Diva (Left). Will slowly make their way toward the doors!",
-        2: "Melissa: Time for another night! Princess Pinky will come from the Left Vent. Put the Starr Mask on when she's about to attack!",
-        3: "Melissa: Penelope Purple is in the Right Vent. Same as Pinky just use the Mask! Good Luck!!",
-        4: "Melissa: Hey Jackson apparently the systems have been really glitchy lately. Workers reporting a glitchy starr baby in the parts and services room.If it stands up, Reset the systems. Don't reset the systems if it's sitting!",
-        5: "Melissa: It's the final night... They have been acting aggressive recently so you won't have to work the after hours... Good luck, Jackson."
+        1: "Danny Stephen: Welcome to the Grand Opening! Jackson, stay sharp.\nMelissa: Watch the Doors! Starr (Right) and Diva (Left) are moving.",
+        2: "Melissa: Pinky is in the Left Vent. Mask up when you hear her!",
+        3: "Melissa: Penelope is in the Right Vent. Use the Mask!",
+        4: "Melissa: The Glitch is in Parts. If he stands up, RESET. Don't touch it if he's sitting!",
+        5: "Melissa: Final night. They are aggressive. Survive, Jackson."
     }
     document["game-output"].text = stories.get(night, "") + "\n\n(Type 1 and SEND to Start Night)"
 
